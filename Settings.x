@@ -17,10 +17,10 @@ static const NSInteger TweakSection = 'ythd';
 - (void)updateYTUHDSectionWithEntry:(id)entry;
 @end
 
-BOOL hasHAMVPXVideoDecoder;
+BOOL hasSWVP9VideoDecoder;
 
-BOOL UseVP9() {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:UseVP9Key];
+BOOL UseVP9orAV1() {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:UseVP9orAV1Key];
 }
 
 BOOL AllVP9() {
@@ -99,18 +99,31 @@ NSBundle *YTUHDBundle() {
     YTSettingsViewController *settingsViewController = [self valueForKey:@"_settingsViewControllerDelegate"];
 
     // Use VP9/AV1
-    YTSettingsSectionItem *vp9 = [YTSettingsSectionItemClass switchItemWithTitle:LOC(@"USE_VP9")
+    if (hasSWVP9VideoDecoder) {
+    YTSettingsSectionItem *vp9andav1 = [YTSettingsSectionItemClass switchItemWithTitle:LOC(@"USE_VP9")
         titleDescription:LOC(@"USE_VP9_DESC")
         accessibilityIdentifier:nil
-        switchOn:UseVP9()
+        switchOn:UseVP9orAV1()
         switchBlock:^BOOL (YTSettingsCell *cell, BOOL enabled) {
-            [[NSUserDefaults standardUserDefaults] setBool:enabled forKey:UseVP9Key];
+            [[NSUserDefaults standardUserDefaults] setBool:enabled forKey:UseVP9orAV1Key];
             return YES;
         }
         settingItemId:0];
-    [sectionItems addObject:vp9];
+    [sectionItems addObject:vp9andav1];
+    } else {
+    YTSettingsSectionItem *av1 = [YTSettingsSectionItemClass switchItemWithTitle:LOC(@"USE_AV1")
+        titleDescription:LOC(@"USE_AV1_DESC")
+        accessibilityIdentifier:nil
+        switchOn:UseVP9orAV1()
+        switchBlock:^BOOL (YTSettingsCell *cell, BOOL enabled) {
+            [[NSUserDefaults standardUserDefaults] setBool:enabled forKey:UseVP9orAV1Key];
+            return YES;
+        }
+        settingItemId:0];
+    [sectionItems addObject:av1];
+    }
 
-    if (hasHAMVPXVideoDecoder) {
+    if (hasSWVP9VideoDecoder) {
         // All VP9
         YTSettingsSectionItem *allVP9 = [YTSettingsSectionItemClass switchItemWithTitle:LOC(@"ALL_VP9")
             titleDescription:LOC(@"ALL_VP9_DESC")
@@ -210,6 +223,6 @@ NSBundle *YTUHDBundle() {
 %end
 
 %ctor {
-    hasHAMVPXVideoDecoder = %c(HAMVPXVideoDecoder) != nil;
+    hasSWVP9VideoDecoder = %c(HAMVPXVideoDecoder) != nil;
     %init;
 }
